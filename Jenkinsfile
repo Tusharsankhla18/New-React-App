@@ -6,7 +6,7 @@ pipeline {
         AZURE_SUBSCRIPTION_ID = '9e88581e-e755-404d-819f-4d6e468ad176'   // Replace with your Azure subscription ID
         AZURE_CLIENT_ID = credentials('2b3370f2-c07e-40f6-8a94-2e06e5ff3483') // Store these values in Jenkins Credentials
         AZURE_CLIENT_SECRET = credentials('yEl8Q~rebDfBqKmdBA4P5JjEMg.5~HoUIfXN-bG9')
-        AZURE_TENANT_ID = credentials('7a839694-b2fa-4d11-aa3e-c5b87aa6db68')
+        AZURE_TENANT_ID = '7a839694-b2fa-4d11-aa3e-c5b87aa6db68'
         REACT_APP_NAME = 'tushar-react-frontend-app'
         RESOURCE_GROUP = 'tushar-react-resource'
     }
