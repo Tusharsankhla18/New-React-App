@@ -2,69 +2,84 @@ pipeline {
     agent any
 
     environment {
-        AZURE_SERVICE_PROVIDER = 'azure-service-principal1'
-        ARM_CLIENT_ID = '2b3370f2-c07e-40f6-8a94-2e06e5ff3483'
-        ARM_SUBSCRIPTION_ID = ' 9e88581e-e755-404d-819f-4d6e468ad176'
-        ARM_TENANT_ID = '7a839694-b2fa-4d11-aa3e-c5b87aa6db68'
-        AZURE_WEBAPP_NAME = "tushar-react-frontend-app"
-        AZURE_RESOURCE_GROUP = "tushar-react-resource"
-        AZURE_LOCATION = "East US 2"
+        AZURE_CREDENTIALS_ID = 'azure-service-principal' // Replace with your Jenkins credential ID
+        AZURE_SUBSCRIPTION_ID = '9e88581e-e755-404d-819f-4d6e468ad176'   // Replace with your Azure subscription ID
+        AZURE_CLIENT_ID = credentials('2b3370f2-c07e-40f6-8a94-2e06e5ff3483') // Store these values in Jenkins Credentials
+        AZURE_CLIENT_SECRET = credentials('yEl8Q~rebDfBqKmdBA4P5JjEMg.5~HoUIfXN-bG9')
+        AZURE_TENANT_ID = credentials('7a839694-b2fa-4d11-aa3e-c5b87aa6db68')
+        REACT_APP_NAME = 'tushar-react-frontend-app'
+        RESOURCE_GROUP = 'tushar-react-resource'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout React App') {
             steps {
-                git branch: 'master', url: 'https://github.com/Tusharsankhla18/New-React-App.git'
+                git url: 'https://github.com/Tusharsankhla18/New-React-App.git', branch: 'master'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Dependencies & Build React App') {
             steps {
-                bat 'npm install'
-            }
-        }
-
-        stage('Build React App') {
-            steps {
-                bat 'npm run build'
-            }
-        }
-
-        stage('Terraform Init') {
-            steps {
-                dir('terraform') {
-                    bat 'terraform init'
+                script {
+                    sh 'npm install'
+                    sh 'npm run build'
                 }
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Initialize Terraform') {
             steps {
                 dir('terraform') {
-                    bat 'terraform apply -auto-approve'
+                    script {
+                        withEnv([
+                            "ARM_CLIENT_ID=${env.AZURE_CLIENT_ID}",
+                            "ARM_CLIENT_SECRET=${env.AZURE_CLIENT_SECRET}",
+                            "ARM_SUBSCRIPTION_ID=${env.AZURE_SUBSCRIPTION_ID}",
+                            "ARM_TENANT_ID=${env.AZURE_TENANT_ID}"
+                        ]) {
+                            sh 'terraform init'
+                        }
+                    }
                 }
             }
         }
 
-        stage('Deploy to Azure Web App') {
+        stage('Apply Terraform') {
             steps {
-                bat """
-                    az webapp deploy ^
-                    --resource-group %AZURE_RESOURCE_GROUP% ^
-                    --name %AZURE_WEBAPP_NAME% ^
-                    --src-path build ^
-                    --type static
-                """
+                dir('terraform') {
+                    script {
+                        withEnv([
+                            "ARM_CLIENT_ID=${env.AZURE_CLIENT_ID}",
+                            "ARM_CLIENT_SECRET=${env.AZURE_CLIENT_SECRET}",
+                            "ARM_SUBSCRIPTION_ID=${env.AZURE_SUBSCRIPTION_ID}",
+                            "ARM_TENANT_ID=${env.AZURE_TENANT_ID}"
+                        ]) {
+                            sh 'terraform apply -auto-approve'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy React App to Azure') {
+            steps {
+                script {
+                    sh """
+                    npm install -g azure-cli
+                    az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID
+                    az webapp deployment source config-zip \
+                        --resource-group $RESOURCE_GROUP \
+                        --name $REACT_APP_NAME \
+                        --src build.zip
+                    """
+                }
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Deployment completed successfully!'
-        }
-        failure {
-            echo '❌ Deployment failed.'
+        always {
+            cleanWs()
         }
     }
 }
