@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AZURE_SERVICE_PROVIDER = 'azure-service-principal1
+        AZURE_SERVICE_PROVIDER = 'azure-service-principal1'
         AZURE_WEBAPP_NAME = "tushar-react-frontend-app"
         AZURE_RESOURCE_GROUP = "tushar-react-resource"
         AZURE_LOCATION = "East US 2"
