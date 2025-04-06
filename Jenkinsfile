@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         AZURE_SERVICE_PROVIDER = 'azure-service-principal1'
+        ARM_CLIENT_ID = '2b3370f2-c07e-40f6-8a94-2e06e5ff3483'
+        ARM_SUBSCRIPTION_ID = ' 9e88581e-e755-404d-819f-4d6e468ad176'
+        ARM_TENANT_ID = '7a839694-b2fa-4d11-aa3e-c5b87aa6db68'
         AZURE_WEBAPP_NAME = "tushar-react-frontend-app"
         AZURE_RESOURCE_GROUP = "tushar-react-resource"
         AZURE_LOCATION = "East US 2"
