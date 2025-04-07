@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Tusharsankhla18/New-React-App.git'
+                git branch: 'master', url: 'https://github.com/Tusharsankhla18/New-React-App.git'
             }
         }
 
