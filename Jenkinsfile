@@ -2,84 +2,46 @@ pipeline {
     agent any
 
     environment {
-        AZURE_CREDENTIALS_ID = 'azure-service-principal2' // Jenkins Credential ID for Azure Service Principal
-        REACT_APP_NAME = 'tushar-react-frontend-app'
+        AZURE_CREDENTIALS_ID = 'azure-service-principal-2'
         RESOURCE_GROUP = 'tushar-react-resource'
+        APP_SERVICE_NAME = 'tushar-react-frontend-app'
     }
 
     stages {
-        stage('Checkout React App') {
+        stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/Tusharsankhla18/New-React-App.git', branch: 'master'
+                git branch: 'main', url: 'https://github.com/sherinsaji126/integrated-react.git'
             }
         }
 
-        stage('Install Dependencies & Build React App') {
+        stage('Install & Build React App') {
             steps {
-                sh 'npm install'
-                sh 'npm run build'
-                sh 'zip -r build.zip build'
-            }
-        }
-
-        stage('Initialize Terraform') {
-            steps {
-                dir('terraform') {
-                    withCredentials([azureServicePrincipal(
-                        credentialsId: env.AZURE_CREDENTIALS_ID,
-                        subscriptionIdVariable: 'ARM_SUBSCRIPTION_ID',
-                        clientIdVariable: 'ARM_CLIENT_ID',
-                        clientSecretVariable: 'ARM_CLIENT_SECRET',
-                        tenantIdVariable: 'ARM_TENANT_ID'
-                    )]) {
-                        sh 'terraform init'
-                    }
+                dir('integrated-react') {
+                    bat 'npm install'
+                    bat 'npm run build'
                 }
             }
         }
 
-        stage('Apply Terraform') {
-            steps {
-                dir('terraform') {
-                    withCredentials([azureServicePrincipal(
-                        credentialsId: env.AZURE_CREDENTIALS_ID,
-                        subscriptionIdVariable: 'ARM_SUBSCRIPTION_ID',
-                        clientIdVariable: 'ARM_CLIENT_ID',
-                        clientSecretVariable: 'ARM_CLIENT_SECRET',
-                        tenantIdVariable: 'ARM_TENANT_ID'
-                    )]) {
-                        sh 'terraform apply -auto-approve'
-                    }
-                }
-            }
-        }
+        
 
-        stage('Deploy React App to Azure') {
+        stage('Deploy to Azure App Service') {
             steps {
-                withCredentials([azureServicePrincipal(
-                    credentialsId: env.AZURE_CREDENTIALS_ID,
-                    subscriptionIdVariable: 'ARM_SUBSCRIPTION_ID',
-                    clientIdVariable: 'ARM_CLIENT_ID',
-                    clientSecretVariable: 'ARM_CLIENT_SECRET',
-                    tenantIdVariable: 'ARM_TENANT_ID'
-                )]) {
-                    sh '''
-                    npm install -g azure-cli
-                    az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET --tenant $ARM_TENANT_ID
-                    az webapp deployment source config-zip \
-                        --resource-group $RESOURCE_GROUP \
-                        --name $REACT_APP_NAME \
-                        --src build.zip
-                    '''
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat 'az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%'
+                    bat 'powershell Compress-Archive -Path integrated-react\\build\\* -DestinationPath build.zip -Force'
+                    bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path build.zip --type zip'
                 }
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
+        success {
+            echo 'Deployment Successful!'
+        }
+        failure {
+            echo 'Deployment Failed!'
         }
     }
 }
-
