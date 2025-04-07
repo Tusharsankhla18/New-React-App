@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AZURE_CREDENTIALS_ID = 'azure-service-principal1' // Jenkins Credential ID for Azure Service Principal
+        AZURE_CREDENTIALS_ID = 'azure-service-principal2' // Jenkins Credential ID for Azure Service Principal
         REACT_APP_NAME = 'tushar-react-frontend-app'
         RESOURCE_GROUP = 'tushar-react-resource'
     }
