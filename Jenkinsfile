@@ -22,6 +22,25 @@ pipeline {
                 }
             }
         }
+        stage('Test Terraform') {
+            steps {
+                dir('terraform-integrated-react') {
+                    bat 'terraform --version'
+                }
+            }
+        }
+
+        stage("Terraform Setup") {
+            steps {
+                dir("terraform-integrated-react") {
+                    bat 'terraform init'
+                    bat 'terraform plan -out=tfplan'
+                    bat 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+
+
 
         
 
